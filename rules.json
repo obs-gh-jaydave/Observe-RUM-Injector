@@ -1,0 +1,37 @@
+[
+    {
+      "id": 1,
+      "priority": 1,
+      "action": {
+        "type": "modifyHeaders",
+        "responseHeaders": [
+          {
+            "header": "content-security-policy",
+            "operation": "set",
+            "value": "default-src * blob: data:; script-src 'self' 'unsafe-eval' http://localhost:* http://127.0.0.1:* chrome-extension:; style-src * 'unsafe-inline'; img-src * data: blob:; font-src * data: blob:; connect-src *;"
+          }
+        ]
+      },
+      "condition": {
+        "urlFilter": "||field-staging.sockshop.biz/*",
+        "resourceTypes": ["main_frame", "sub_frame"]
+      }
+    },
+    {
+      "id": 2,
+      "priority": 1,
+      "action": {
+        "type": "modifyHeaders",
+        "responseHeaders": [
+          {
+            "header": "content-security-policy-report-only",
+            "operation": "remove"
+          }
+        ]
+      },
+      "condition": {
+        "urlFilter": "||field-staging.sockshop.biz/*",
+        "resourceTypes": ["main_frame", "sub_frame"]
+      }
+    }
+  ]

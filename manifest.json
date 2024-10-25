@@ -1,0 +1,42 @@
+{
+    "manifest_version": 3,
+    "name": "Observe RUM Integration",
+    "version": "1.0",
+    "permissions": [
+        "storage"
+    ],
+    "host_permissions": [
+        "https://*.ycombinator.com/*",
+        "https://*.collect.observeinc.com/*",
+        "https://*.field-staging.sockshop.biz/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*.ycombinator.com/*",
+                "https://*.field-staging.sockshop.biz/*"
+            ],
+            "js": ["content.js"],
+            "run_at": "document_start"
+        }
+    ],
+    "web_accessible_resources": [{
+        "resources": [
+            "elastic-apm-rum.umd.min.js",
+            "apm-init.js",
+            "config-setter.js"
+        ],
+        "matches": [
+            "https://*.ycombinator.com/*",
+            "https://*.field-staging.sockshop.biz/*"
+        ]
+    }],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": "icon.png"
+    },
+    "options_page": "options.html"
+}
