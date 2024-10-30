@@ -1,6 +1,57 @@
 (function() {
     console.log('[APM Init] Starting initialization process');
 
+    function getBrowserInfo() {
+        const uaData = navigator.userAgentData || {};
+        const brands = uaData.brands || [];
+        const ua = navigator.userAgent;
+        
+        // Modern browser detection
+        const browserInfo = {
+            name: brands[0]?.brand || getBrowserNameFromUA(ua),
+            version: brands[0]?.version || getBrowserVersionFromUA(ua),
+            mobile: uaData.mobile || isMobileFromUA(ua),
+            platform: uaData.platform || getPlatformFromUA(ua),
+            language: navigator.language,
+        };
+
+        return browserInfo;
+    }
+
+    // Fallback functions for older browsers
+    function getBrowserNameFromUA(ua) {
+        const browsers = {
+            'Chrome': /Chrome\/(\d+)/,
+            'Firefox': /Firefox\/(\d+)/,
+            'Safari': /Safari\/(\d+)/,
+            'Edge': /Edg\/(\d+)/,
+            'Opera': /OPR\/(\d+)/
+        };
+        
+        for (const [name, regex] of Object.entries(browsers)) {
+            if (regex.test(ua)) return name;
+        }
+        return 'Unknown';
+    }
+
+    function getBrowserVersionFromUA(ua) {
+        const match = ua.match(/(Chrome|Firefox|Safari|Edge|OPR)\/(\d+)/);
+        return match ? match[2] : 'Unknown';
+    }
+
+    function isMobileFromUA(ua) {
+        return /Mobile|Android|iOS|iPhone|iPad|iPod/i.test(ua);
+    }
+
+    function getPlatformFromUA(ua) {
+        if (/Windows/.test(ua)) return 'Windows';
+        if (/Macintosh/.test(ua)) return 'macOS';
+        if (/Linux/.test(ua)) return 'Linux';
+        if (/Android/.test(ua)) return 'Android';
+        if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
+        return 'Unknown';
+    }
+
     function initializeApm() {
         console.log('[APM Init] Checking dependencies:', {
             hasConfig: !!window.OBSERVE_CONFIG,
@@ -17,10 +68,9 @@
         console.log('[APM Init] Initializing APM with config');
         
         try {
-            // Get user agent info
-            const userAgent = window.navigator.userAgent;
-            const nav = window.navigator;
-
+            // Get browser information
+            const browserInfo = getBrowserInfo();
+            
             // Initialize APM
             elasticApm.init({
                 serviceName: 'eStore',
@@ -40,33 +90,37 @@
 
             console.log('[APM Init] APM initialized successfully');
 
-            // Add additional browser context via labels
+            // Add browser information as labels
             elasticApm.addLabels({
-                'browser.name': nav.appName,
-                'browser.version': nav.appVersion,
-                'browser.mobile': /Mobile|Android|iOS|iPhone|iPad|iPod/i.test(nav.userAgent),
-                'browser.platform': nav.platform,
-                'browser.language': nav.language,
+                'browser.name': browserInfo.name,
+                'browser.version': browserInfo.version,
+                'browser.mobile': browserInfo.mobile,
+                'browser.platform': browserInfo.platform,
+                'browser.language': browserInfo.language,
                 'screen.width': window.screen.width,
                 'screen.height': window.screen.height,
                 'screen.density': window.devicePixelRatio,
                 'device.orientation': screen.orientation?.type || 'unknown'
             });
 
-            // Add custom context
+            // Add detailed context
             elasticApm.setCustomContext({
-                userAgent: userAgent,
-                browser: {
-                    name: navigator.appName,
-                    platform: navigator.platform,
-                    version: navigator.appVersion,
-                    language: navigator.language
-                },
+                browser: browserInfo,
                 screen: {
                     width: window.screen.width,
                     height: window.screen.height,
-                    orientation: window.screen.orientation?.type || 'unknown'
-                }
+                    density: window.devicePixelRatio,
+                    orientation: screen.orientation?.type || 'unknown'
+                },
+                viewport: {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                },
+                connection: navigator.connection ? {
+                    type: navigator.connection.effectiveType,
+                    downlink: navigator.connection.downlink,
+                    rtt: navigator.connection.rtt
+                } : undefined
             });
 
             // Create a page load transaction
@@ -75,6 +129,11 @@
             // Add initialization span
             const span = transaction.startSpan('init-process', 'custom');
             if (span) {
+                // Add browser info to span
+                span.addLabels({
+                    'init.browser': browserInfo.name,
+                    'init.platform': browserInfo.platform
+                });
                 span.end();
             }
             
