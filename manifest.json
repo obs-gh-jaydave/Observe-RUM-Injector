@@ -8,6 +8,7 @@
     "host_permissions": [
         "https://*.ycombinator.com/*",
         "https://*.collect.observeinc.com/*",
+        "https://*.collect.observe-eng.com/*",
         "https://*.field-staging.sockshop.biz/*"
     ],
     "background": {
